@@ -554,6 +554,22 @@
 
 <script>
 /* ======================================================
+   ALAMAT WEB ASLI SITUS INI (WAJIB DIISI!)
+   ------------------------------------------------------
+   Karena situs ini ditanam (embed) di Google Sites, JavaScript
+   TIDAK BISA otomatis mengetahui alamat sites.google.com yang
+   dilihat pengunjung (itu dibatasi oleh iframe/sandbox Google).
+   Supaya fitur "Bagikan Berita" menghasilkan tautan yang benar,
+   isi SITE_URL di bawah ini dengan alamat halaman Google Sites
+   kamu (URL yang muncul di address bar saat orang buka situsnya),
+   TANPA tanda "/" di akhir. Contoh:
+   const SITE_URL = "https://sites.google.com/view/portaldesa-nagreg";
+   Kalau dikosongkan (""), sistem akan coba menebak otomatis
+   (hanya akurat kalau file ini dibuka langsung, BUKAN lewat embed). */
+const SITE_URL = "https://adang-spec.github.io/portaldesa";
+/* ====================================================== */
+
+/* ======================================================
    ISI / EDIT KONTEN REGULASI DESA DI SINI.
    Tinggal salin satu blok { ... }, ubah isinya, tempel lagi
    untuk menambah dokumen baru. Urutan tampil = urutan di
@@ -874,7 +890,7 @@ function openBerita(i){
   `;
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
-  history.replaceState(null, '', `?berita=${i}#berita`);
+  aturUrlBerita(`?berita=${i}#berita`);
 
   /* Hitung +1 pembaca untuk berita ini (sekali per kunjungan modal) */
   hitBeritaCounter(i);
@@ -883,7 +899,19 @@ function openBerita(i){
 function closeBerita(){
   document.getElementById('news-modal').classList.remove('open');
   document.body.style.overflow = '';
-  history.replaceState(null, '', location.pathname + '#berita');
+  aturUrlBerita(location.pathname + '#berita');
+}
+
+/* Ubah URL alamat browser tanpa reload halaman (untuk fitur "bagikan tautan berita").
+   Dibungkus try/catch karena beberapa lingkungan pratinjau (mis. sandbox iframe)
+   tidak mengizinkan history.replaceState dan akan melempar SecurityError. */
+function aturUrlBerita(url){
+  try{
+    history.replaceState(null, '', url);
+  }catch(err){
+    /* diamkan saja: fitur buka-otomatis dari tautan tetap berjalan
+       di hosting normal, hanya tidak tersedia di pratinjau sandbox */
+  }
 }
 
 document.getElementById('news-modal').addEventListener('click', (e)=>{
@@ -905,25 +933,87 @@ function showToast(msg){
   t._timer = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
+/* Bangun tautan berita yang valid.
+   Prioritas 1: pakai SITE_URL yang sudah diisi manual di atas (paling andal,
+   terutama kalau situs ini ditanam/embed di Google Sites atau platform lain).
+   Prioritas 2: kalau SITE_URL kosong, coba tebak otomatis dari alamat saat
+   ini (hanya akurat kalau file dibuka langsung, bukan lewat embed/iframe). */
+function buildShareUrl(i){
+  if(SITE_URL && SITE_URL.trim() !== ''){
+    return `${SITE_URL.replace(/\/$/, '')}?berita=${i}#berita`;
+  }
+  try{
+    const origin = location.origin;
+    const isPratinjau = !origin || origin === 'null' || location.protocol === 'about:';
+    if(isPratinjau) return null;
+    return `${origin}${location.pathname}?berita=${i}#berita`;
+  }catch(err){
+    return null;
+  }
+}
+
+/* Kotak salin tautan cadangan yang SELALU muncul di layar (bukan popup),
+   dipakai kalau clipboard & window.prompt sama-sama diblokir oleh sandbox
+   (situasi umum saat situs ditanam/embed di Google Sites). */
+function showShareFallback(url, judul){
+  let panel = document.getElementById('share-fallback');
+  if(panel) panel.remove();
+  panel = document.createElement('div');
+  panel.id = 'share-fallback';
+  panel.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);'
+    + 'background:var(--ink-navy-deep);color:var(--paper);padding:18px;border-radius:16px;'
+    + 'box-shadow:0 12px 34px rgba(0,0,0,0.35);z-index:600;max-width:92vw;width:380px;'
+    + 'font-family:"Plus Jakarta Sans",sans-serif;';
+  panel.innerHTML = `
+    <div style="font-size:.82rem;font-weight:700;margin-bottom:10px;">Salin tautan berita "${judul}":</div>
+    <input id="share-fallback-input" type="text" readonly
+      style="width:100%;padding:11px;border-radius:8px;border:none;font-size:.78rem;font-family:'IBM Plex Mono',monospace;">
+    <button id="share-fallback-close"
+      style="margin-top:12px;width:100%;padding:10px;border-radius:8px;border:none;background:var(--gold);color:var(--ink-navy-deep);font-weight:700;cursor:pointer;">Tutup</button>
+  `;
+  document.body.appendChild(panel);
+  const input = panel.querySelector('#share-fallback-input');
+  input.value = url;
+  input.focus();
+  input.select();
+  panel.querySelector('#share-fallback-close').addEventListener('click', () => panel.remove());
+}
+
 async function shareBerita(i){
   const b = beritaData[i];
-  const shareUrl = `${location.origin}${location.pathname}?berita=${i}#berita`;
-  const shareData = { title: b.judul, text: b.ringkas, url: shareUrl };
+  const shareUrl = buildShareUrl(i);
+  const shareData = shareUrl
+    ? { title: b.judul, text: b.ringkas, url: shareUrl }
+    : { title: b.judul, text: b.ringkas };
 
   if(navigator.share){
     try{
       await navigator.share(shareData);
+      return;
     }catch(err){
-      /* pengguna membatalkan share, tidak perlu ditangani */
+      if(err && err.name === 'AbortError') return; /* pengguna membatalkan sendiri */
+      /* gagal karena sebab lain (misal diblokir sandbox) -> lanjut ke cara cadangan di bawah */
     }
+  }
+
+  if(!shareUrl){
+    showToast('Isi SITE_URL di kode HTML supaya tautan berita bisa dibagikan');
     return;
   }
 
   try{
     await navigator.clipboard.writeText(shareUrl);
     showToast('Tautan berita disalin ke clipboard');
+    return;
   }catch(err){
+    /* clipboard diblokir, lanjut coba prompt */
+  }
+
+  try{
     window.prompt('Salin tautan berikut untuk membagikan berita ini:', shareUrl);
+  }catch(err){
+    /* prompt juga diblokir (umum di iframe embed Google Sites) -> tampilkan kotak salin manual */
+    showShareFallback(shareUrl, b.judul);
   }
 }
 
