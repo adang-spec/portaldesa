@@ -23,14 +23,15 @@
     --max:1180px;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  html{scroll-behavior:smooth;}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  html,body{max-width:100%;overflow-x:hidden;}
   body{
     font-family:'Plus Jakarta Sans',sans-serif;
     color:var(--text);
     background:var(--paper);
     -webkit-font-smoothing:antialiased;
   }
-  img{max-width:100%;display:block;}
+  img{max-width:100%;height:auto;display:block;}
   a{color:inherit;text-decoration:none;}
   .eyebrow{
     font-family:'IBM Plex Mono',monospace;
@@ -80,17 +81,29 @@
   }
   nav.links a:hover{color:var(--paper);background:rgba(217,164,65,0.14);}
   nav.links a.active{color:var(--ink-navy-deep);background:var(--gold);}
-  .menu-toggle{display:none;background:none;border:none;cursor:pointer;padding:6px;}
+  .menu-toggle{display:none;background:none;border:none;cursor:pointer;padding:10px;min-width:44px;min-height:44px;}
   .menu-toggle span{display:block;width:24px;height:2px;background:var(--paper);margin:5px 0;}
 
   @media (max-width:980px){
     nav.links{
-      position:fixed;inset:0;top:66px;background:var(--ink-navy-deep);
-      flex-direction:column;align-items:stretch;padding:18px;gap:6px;
+      position:fixed;inset:0;top:66px;
+      background:var(--ink-navy-deep);
+      flex-direction:column;align-items:stretch;padding:18px;gap:10px;
       transform:translateX(100%);transition:transform .3s ease;
+      overflow-y:auto;-webkit-overflow-scrolling:touch;
+      z-index:150;
     }
     nav.links.open{transform:translateX(0);}
-    nav.links a{padding:14px 16px;font-size:1rem;border-bottom:1px solid rgba(255,255,255,0.06);border-radius:0;}
+    /* setiap item menu punya kotak sendiri (semi-transparan) supaya teks selalu
+       terbaca jelas walau ada elemen lain di baliknya */
+    nav.links a{
+      padding:16px 18px;font-size:1.05rem;font-weight:700;
+      border-bottom:none;border-radius:14px;
+      background:rgba(251,249,243,0.08);
+      border:1px solid rgba(251,249,243,0.14);
+    }
+    nav.links a:hover{background:rgba(217,164,65,0.18);}
+    nav.links a.active{background:var(--gold);color:var(--ink-navy-deep);}
     .menu-toggle{display:block;}
   }
 
@@ -425,6 +438,12 @@
     .doc-title{font-size:.88rem;}
 
     .foot-bottom{flex-direction:column;gap:6px;}
+
+    /* target sentuh lebih besar di HP */
+    .filter-btn{padding:10px 16px;}
+    .dl-btn{padding:10px 14px;}
+    .share-btn{padding:10px 16px;}
+    .desa-links a{padding:9px 12px;}
   }
 
   @media (max-width:380px){
@@ -447,17 +466,20 @@
     <button class="menu-toggle" aria-label="Buka menu" onclick="document.querySelector('nav.links').classList.toggle('open')">
       <span></span><span></span><span></span>
     </button>
-    <nav class="links">
-      <a href="#beranda">Beranda</a>
-      <a href="#regulasi">Regulasi Desa</a>
-      <a href="#template">Template</a>
-      <a href="#berita">Berita Desa</a>
-      <a href="#foto">Foto Kegiatan</a>
-      <a href="#media-resmi">Media Resmi</a>
-      <a href="#sosialisasi">Media Sosialisasi</a>
-    </nav>
   </div>
 </header>
+
+<!-- Menu mobile SENGAJA diletakkan di luar <header> (bukan di dalamnya) supaya
+     backdrop-filter pada header tidak "menjepit" overlay fixed ini ke ukuran header. -->
+<nav class="links">
+  <a href="#beranda">Beranda</a>
+  <a href="#regulasi">Regulasi Desa</a>
+  <a href="#template">Template</a>
+  <a href="#berita">Berita Desa</a>
+  <a href="#foto">Foto Kegiatan</a>
+  <a href="#media-resmi">Media Resmi</a>
+  <a href="#sosialisasi">Media Sosialisasi</a>
+</nav>
 
 <!-- ================= HERO / BERANDA ================= -->
 <div id="beranda" class="hero">
@@ -477,6 +499,7 @@
         <div class="stat"><b>08</b><span>Desa Dampingan</span></div>
         <div class="stat"><b>24+</b><span>Dokumen Regulasi</span></div>
         <div class="stat"><b>40 km</b><span>Jalur Layanan Kec. Nagreg</span></div>
+        <div class="stat"><b id="stat-pengunjung">—</b><span>Pengunjung Web</span></div>
       </div>
     </div>
     <div class="portrait-col">
@@ -821,7 +844,7 @@ function renderBerita(){
         ${b.foto ? '' : `<span>${b.desa}</span>`}
       </div>
       <div class="news-body">
-        <div class="news-date">${b.tanggal} · ${b.desa}</div>
+        <div class="news-date">${b.tanggal} · ${b.desa} · <span id="baca-count-${i}">…</span> dibaca</div>
         <h3>${b.judul}</h3>
         <p>${b.ringkas}</p>
         <span class="read" onclick="openBerita(${i})" role="button" tabindex="0">Baca selengkapnya →</span>
@@ -841,7 +864,7 @@ function openBerita(i){
   const modal = document.getElementById('news-modal');
   document.getElementById('news-modal-content').innerHTML = `
     ${b.foto ? `<img src="${b.foto}" alt="${b.judul}" style="width:100%;border-radius:10px;margin-bottom:18px;">` : ''}
-    <div class="news-date" style="margin-bottom:6px;">${b.tanggal} · ${b.desa}</div>
+    <div class="news-date" style="margin-bottom:6px;">${b.tanggal} · ${b.desa} · <span id="baca-count-modal">…</span> dibaca</div>
     <h2 style="font-family:'Fraunces',serif;color:var(--ink-navy);font-size:1.4rem;line-height:1.3;margin-bottom:16px;">${b.judul}</h2>
     ${b.isi.map(p => `<p style="margin-bottom:14px;line-height:1.7;color:#33383c;font-size:.95rem;">${p}</p>`).join('')}
     <button class="share-btn modal-share-btn" onclick="shareBerita(${i})" aria-label="Bagikan berita ini">
@@ -852,6 +875,9 @@ function openBerita(i){
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
   history.replaceState(null, '', `?berita=${i}#berita`);
+
+  /* Hitung +1 pembaca untuk berita ini (sekali per kunjungan modal) */
+  hitBeritaCounter(i);
 }
 
 function closeBerita(){
@@ -902,6 +928,72 @@ async function shareBerita(i){
 }
 
 renderBerita();
+
+/* ---------- PENGHITUNG PENGUNJUNG WEB & PEMBACA BERITA ----------
+   Pakai CountAPI (layanan counter publik gratis, tanpa perlu server sendiri)
+   supaya angkanya benar-benar terhitung dari semua pengunjung, bukan cuma
+   per-HP/per-browser. Namespace dibuat unik untuk situs ini. */
+const COUNTER_NAMESPACE = 'portaldesa-tpp-nagreg-kabbandung';
+
+function formatAngka(n){
+  return new Intl.NumberFormat('id-ID').format(n);
+}
+
+/* Hitung +1 pengunjung, sekali per sesi browser (pakai sessionStorage,
+   supaya reload halaman yang sama tidak dobel-hitung). */
+async function hitPengunjungWeb(){
+  const el = document.getElementById('stat-pengunjung');
+  if(!el) return;
+  try{
+    let sudahDihitung = sessionStorage.getItem('pd_visit_counted');
+    const url = sudahDihitung
+      ? `https://api.countapi.xyz/get/${COUNTER_NAMESPACE}/pengunjung`
+      : `https://api.countapi.xyz/hit/${COUNTER_NAMESPACE}/pengunjung`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if(!sudahDihitung) sessionStorage.setItem('pd_visit_counted', '1');
+    el.textContent = formatAngka(data.value);
+  }catch(err){
+    el.textContent = '–';
+  }
+}
+
+/* Tampilkan jumlah pembaca tiap berita (tanpa menambah hitungan) saat daftar dimuat */
+async function renderJumlahDibaca(){
+  for(let i = 0; i < beritaData.length; i++){
+    const el = document.getElementById(`baca-count-${i}`);
+    if(!el) continue;
+    try{
+      const res = await fetch(`https://api.countapi.xyz/get/${COUNTER_NAMESPACE}/berita-${i}`);
+      const data = await res.json();
+      el.textContent = formatAngka(data.value || 0);
+    }catch(err){
+      el.textContent = '0';
+    }
+  }
+}
+
+/* Tambah +1 pembaca saat berita benar-benar dibuka (dibatasi 1x per berita per sesi) */
+async function hitBeritaCounter(i){
+  const cardEl = document.getElementById(`baca-count-${i}`);
+  const modalEl = document.getElementById('baca-count-modal');
+  const sudah = sessionStorage.getItem(`pd_baca_${i}`);
+  try{
+    const url = sudah
+      ? `https://api.countapi.xyz/get/${COUNTER_NAMESPACE}/berita-${i}`
+      : `https://api.countapi.xyz/hit/${COUNTER_NAMESPACE}/berita-${i}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if(!sudah) sessionStorage.setItem(`pd_baca_${i}`, '1');
+    if(cardEl) cardEl.textContent = formatAngka(data.value);
+    if(modalEl) modalEl.textContent = formatAngka(data.value);
+  }catch(err){
+    if(modalEl) modalEl.textContent = '–';
+  }
+}
+
+hitPengunjungWeb();
+renderJumlahDibaca();
 
 /* Buka otomatis berita jika halaman diakses lewat tautan bagikan (?berita=INDEX) */
 (function openBeritaFromUrl(){
