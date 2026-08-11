@@ -819,6 +819,40 @@ const beritaData = [
     foto: null
   },
   {
+    <script>
+    const beritaDesa = {
+        desa: "CIHERANG",
+        tanggal: "11 Agustus 2026",
+        judul: "DESA CIHERANG KEBUT REALISASI DANA DESA TAHAP 2",
+        ringkas: "Pemerintah Desa Ciherang mulai melaksanakan pembangunan drainase di RW 08 yang bersumber dari Dana Desa Tahap II TA 2026.",
+        isi: [
+            "Pemerintah Desa Ciherang mulai melaksanakan kegiatan pembangunan drainase di wilayah RW 08 yang bersumber dari Dana Desa Tahap II Tahun Anggaran 2026.",
+            "Pelaksanaan kegiatan ini sebelumnya telah melalui musyawarah persiapan pelaksanaan pada 6 Agustus 2026. Musyawarah tersebut menjadi bagian penting dalam memastikan kegiatan pembangunan dapat dilaksanakan secara terarah, transparan, dan sesuai dengan perencanaan yang telah ditetapkan.",
+            "Pada Selasa, 11 Agustus 2026, Pendamping Desa (PD) Teknik bersama Pendamping Lokal Desa (PLD) melakukan kunjungan ke lokasi kegiatan. Kunjungan tersebut bertujuan untuk memastikan kelengkapan administrasi dan teknis serta kesesuaian pelaksanaan pekerjaan dengan perencanaan kegiatan, termasuk lokasi dan pelaksanaan pembangunan di lapangan.",
+            "Dalam kunjungan tersebut, PD Teknik dan PLD turut didampingi oleh perwakilan BPD, Kasi Perencanaan Desa Ciherang, serta Ketua RW 08. Kehadiran unsur pemerintah desa, BPD, pendamping desa, dan kewilayahan diharapkan dapat memperkuat pengawasan serta memastikan pembangunan berjalan sesuai ketentuan.",
+            "Pembangunan drainase di RW 08 diharapkan dapat membantu meningkatkan sistem pengelolaan aliran air, mengurangi potensi genangan, serta mendukung peningkatan kualitas infrastruktur lingkungan masyarakat.",
+            "Pendampingan dan monitoring secara langsung menjadi bagian dari upaya bersama untuk memastikan pemanfaatan Dana Desa Tahap II benar-benar dilaksanakan sesuai perencanaan dan memberikan manfaat bagi masyarakat Desa Ciherang."
+        ],
+        hashtags: ["#DesaCiherang", "#DanaDesa", "#DanaDesa2026", "#PembangunanDesa", "#Drainase", "#RW08", "#PendampingDesa", "#PLD", "#PDTeknik", "#PembangunanInfrastruktur", "#DesaMembangun"],
+        foto: "https://drive.google.com/uc?export=view&id=19_yh-OgnMLA_9SgUVyg_el-xpo8jkja8"
+    };
+
+    // Mengisi data ke HTML
+    document.getElementById('desa').innerText = beritaDesa.desa;
+    document.getElementById('tanggal').innerText = beritaDesa.tanggal;
+    document.getElementById('judul').innerText = beritaDesa.judul;
+    document.getElementById('ringkas').innerText = beritaDesa.ringkas;
+    document.getElementById('foto-berita').src = beritaDesa.foto;
+    
+    const isiContainer = document.getElementById('isi');
+    beritaDesa.isi.forEach(paragraf => {
+        const p = document.createElement('p');
+        p.innerText = paragraf;
+        isiContainer.appendChild(p);
+    });
+
+    document.getElementById('hashtags').innerText = beritaDesa.hashtags.join(' ');
+</script>
     desa: "Desa Ciherang",
     tanggal: "2 Mei 2025",
     judul: "Verifikasi Tim Kecamatan dan Pendamping Desa untuk Musyawarah Penataan Desa",
